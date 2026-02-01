@@ -14,7 +14,7 @@ jobs:
       
       - name: Generate timestamp
         id: timestamp
-        run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+        run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> "$GITHUB_OUTPUT"
       
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -24,9 +24,6 @@ jobs:
       
       - name: Parse build matrix and create releases
         run: |
-          # Read the build.yaml to get board configurations
-          boards=$(yq -o json '.include[] | .board + "_" + .shield' build.yaml | tr -d '"')
-          
           # Create a directory for renamed artifacts
           mkdir -p releases
           
@@ -49,7 +46,7 @@ jobs:
           zip -r "../firmware_all_${{ steps.timestamp.outputs.timestamp }}.zip" .
       
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ steps.timestamp.outputs.timestamp }}
           name: Firmware Build ${{ steps.timestamp.outputs.timestamp }}
