@@ -2,4 +2,63 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
+    permissions:
+      actions: read
+      contents: read
     uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+  
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Generate timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> "$GITHUB_OUTPUT"
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: artifacts
+      
+      - name: Parse build matrix and create releases
+        run: |
+          # Create a directory for renamed artifacts
+          mkdir -p releases
+          
+          # Rename artifacts with timestamp and board info
+          for artifact in artifacts/*; do
+            if [ -f "$artifact" ]; then
+              filename=$(basename "$artifact")
+              # Extract board/shield info from filename (format: shield-board-zmk.uf2)
+              base="${filename%.*}"
+              ext="${filename##*.}"
+              
+              # Create new filename with timestamp
+              new_name="firmware_${base}_${{ steps.timestamp.outputs.timestamp }}.${ext}"
+              cp "$artifact" "releases/$new_name"
+            fi
+          done
+          
+          # Create a combined zip for all artifacts
+          cd releases
+          zip -r "../firmware_all_${{ steps.timestamp.outputs.timestamp }}.zip" .
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ steps.timestamp.outputs.timestamp }}
+          name: Firmware Build ${{ steps.timestamp.outputs.timestamp }}
+          files: |
+            releases/*
+            firmware_all_${{ steps.timestamp.outputs.timestamp }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
