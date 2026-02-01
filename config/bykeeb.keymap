@@ -1,0 +1,13 @@
+#include "zmk-helpers/key-labels/36.h"
+
+// &soft_off {
+//    hold-time-ms = <5000>; // Only turn off it the key is held for 5 seconds or longer.
+// };
+
+#define X_LH_N 1
+#define X_LH_0 SYSCAPE
+
+#define X_RH_N 1
+#define X_RH_0 DELMOUSE
+
+#include "base.keymap"
