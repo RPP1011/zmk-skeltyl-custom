@@ -1,8 +1,8 @@
 include:
   - board: nice_nano_v2
     shield: skeletyl_left
-  - board: nice_nano_v2
+  - board: nice_nano_v2 nice_view nice_view_adapter
     shield: skeletyl_right
-  - board: nice_nano_v2
+  - board: nice_nano_v2 nice_view nice_view_adapter
     shield: settings_reset
 
